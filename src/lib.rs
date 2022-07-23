@@ -124,7 +124,7 @@ impl TaggedBundle {
             .flatten()
     }
 
-    fn get_bundle(&self, content_index: usize) -> Result<OscBundle, String> {
+    pub fn get_bundle(&self, content_index: usize) -> Result<OscBundle, String> {
         self.contents.get(content_index)
             .map(|pct| pct.clone())
             .ok_or("Invalid index".to_string())

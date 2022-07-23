@@ -105,13 +105,13 @@ impl TaggedBundle {
         })
     }
 
-    fn get_packet(&self, content_index: usize) -> Result<OscPacket, String> {
+    pub fn get_packet(&self, content_index: usize) -> Result<OscPacket, String> {
         self.contents.get(content_index)
             .map(|pct| pct.clone())
             .ok_or("Failed to fetch packet".to_string())
     }
 
-    fn get_message(&self, content_index: usize) -> Result<OscMessage, String> {
+    pub fn get_message(&self, content_index: usize) -> Result<OscMessage, String> {
         self.contents.get(content_index)
             .map(|pct| pct.clone())
             .ok_or("Invalid index".to_string())

@@ -16,7 +16,7 @@ use std::sync::{Arc, Mutex};
 /*
     Adding some convenience functions for OscMessage args
  */
-trait OscArgHandler {
+pub trait OscArgHandler {
     fn expect_addr(&self, addr_name: &str) -> Result<(), String>;
     fn expect_args(&self, amount: usize) -> Result<String, String>;
     fn get_string_at(&self, index: usize, name: &str, ) -> Result<String, String>;
@@ -26,7 +26,7 @@ trait OscArgHandler {
 
 impl OscArgHandler for OscMessage {
 
-    fn expect_addr(&self, addr_name: &str) -> Result<(), String> {
+    pub fn expect_addr(&self, addr_name: &str) -> Result<(), String> {
         if &self.addr.to_string() != addr_name {
             return Err(format!("Attempted to format {} as the wrong kind of message - this likely a human error in the source code", addr_name));
         }
@@ -34,7 +34,7 @@ impl OscArgHandler for OscMessage {
         Ok(())
     }
 
-    fn expect_args(&self, amount: usize) -> Result<String, String> {
+    pub fn expect_args(&self, amount: usize) -> Result<String, String> {
 
         if self.args.len() < amount {
             return Err(format!("Message did not contain the {} first required args.", amount));
@@ -43,7 +43,7 @@ impl OscArgHandler for OscMessage {
         Ok("Ok".to_string())
     }
 
-    fn get_string_at(&self, index: usize, name: &str, ) -> Result<String, String> {
+    pub fn get_string_at(&self, index: usize, name: &str, ) -> Result<String, String> {
         let err_msg = format!("{} string not found as {}th arg", name, index);
         self.args
             .get(index)
@@ -51,7 +51,7 @@ impl OscArgHandler for OscMessage {
             .map_or(Err(err_msg), |s| Ok(s))
     }
 
-    fn get_float_at(&self, index: usize, name: &str, ) -> Result<f32, String> {
+    pub fn get_float_at(&self, index: usize, name: &str, ) -> Result<f32, String> {
         let err_msg = format!("{} float not found as {}th arg", name, index);
         self.args
             .get(index)
@@ -59,7 +59,7 @@ impl OscArgHandler for OscMessage {
             .map_or(Err(err_msg), |s| Ok(s))
     }
 
-    fn get_int_at(&self, index: usize, name: &str, ) -> Result<i32, String> {
+    pub fn get_int_at(&self, index: usize, name: &str, ) -> Result<i32, String> {
         let err_msg = format!("{} float not found as {}th arg", name, index);
         self.args
             .get(index)

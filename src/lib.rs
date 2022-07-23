@@ -1,7 +1,6 @@
 #![feature(result_flattening)]
 use rosc::{OscBundle, OscMessage, OscPacket};
 
-
 /*
     OSC structs for careful parsing and management of expected message and bundle types.
  */

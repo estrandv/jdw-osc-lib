@@ -114,7 +114,7 @@ impl TaggedBundle {
     pub fn get_message(&self, content_index: usize) -> Result<OscMessage, String> {
         self.contents.get(content_index)
             .map(|pct| pct.clone())
-            .ok_or(format!("Could not get packet on index {} for bundle with tag {}", content_index, &self.bundle_tag))
+            .ok_or(format!("Could not get packet on index {} for bundle {:?}", content_index, &self))
             .map(|pct| match pct {
                 OscPacket::Message(msg) => {
                     Ok(msg)
@@ -127,7 +127,7 @@ impl TaggedBundle {
     pub fn get_bundle(&self, content_index: usize) -> Result<OscBundle, String> {
         self.contents.get(content_index)
             .map(|pct| pct.clone())
-            .ok_or(format!("Could not get packet on index {} for bundle with tag {}", content_index, &self.bundle_tag))
+            .ok_or(format!("Could not get packet on index {} for bundle {:?}", content_index, &self))
             .map(|pct| match pct {
                 OscPacket::Bundle(msg) => {
                     Ok(msg)

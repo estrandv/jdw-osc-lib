@@ -1,4 +1,5 @@
 #![feature(result_flattening)]
+use bigdecimal::BigDecimal;
 use rosc::{OscBundle, OscMessage, OscPacket};
 
 /*
@@ -9,6 +10,7 @@ use std::any::Any;
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt::format;
+use std::str::FromStr;
 use rosc::{OscError, OscType};
 use std::option::Option;
 use std::sync::{Arc, Mutex};
@@ -147,7 +149,7 @@ impl TaggedBundle {
  */
 #[derive(Debug, Clone)]
 pub struct TimedOSCPacket {
-    pub time: f32,
+    pub time: BigDecimal,
     pub packet: OscPacket,
 }
 
@@ -162,7 +164,8 @@ impl TimedOSCPacket {
         let packet = bundle.get_packet(1)?;
 
         info_msg.expect_addr("/timed_msg_info")?;
-        let time = info_msg.get_float_at(0, "time")?;
+        let time_str = info_msg.get_string_at(0, "time")?;
+        let time = BigDecimal::from_str(&time_str).unwrap(); 
 
         Ok(TimedOSCPacket {
             time,

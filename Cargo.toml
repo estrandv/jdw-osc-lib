@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 bigdecimal = "0.4.2"
 rosc = "0.7.0"
+log = "0.4.17"

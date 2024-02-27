@@ -9,7 +9,7 @@
 
 */
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use log::warn;
 extern crate rosc;
@@ -24,6 +24,7 @@ use crate::model::TaggedBundle;
 pub struct OSCStack<'a> {
     message_operations: HashMap<String, &'a dyn Fn(OscMessage)>,
     tbundle_operations: HashMap<String, &'a dyn Fn(TaggedBundle)>,
+    tbundle_funnels: HashSet<String>,
     host_url: String
 }
 
@@ -32,6 +33,7 @@ impl <'a> OSCStack<'a> {
         OSCStack {
             message_operations: HashMap::new(),
             tbundle_operations: HashMap::new(),
+            tbundle_funnels: HashSet::new(),
             host_url
         }
     }
@@ -44,6 +46,57 @@ impl <'a> OSCStack<'a> {
     pub fn on_tbundle(&'a mut self, tag: &str, operations: &'a dyn Fn(TaggedBundle))  -> &mut OSCStack {
         self.tbundle_operations.insert(tag.to_string(), operations);
         self
+    }
+
+    // Funnel contents of tagged bundle to be interpreted individually
+    // This effectively invalidates any on_tbundle ops for the given bundle tag
+    pub fn funnel_tbundle(&'a mut self, tag: &str) -> &mut OSCStack {
+
+        self.tbundle_funnels.insert(tag.to_string());
+        self
+    }
+
+    /*
+        TODO: Funnel
+        - Ideally:
+            - from outside (caller)
+            - at any time (inside other functions)
+                -> Can have the Fn take self? Or is that a violation of lifetimes?
+            - perform the self.operations.map(call)
+        - Ways around it
+            - Special "on_tbundle_funnel" that does this internally
+                - As in:
+
+     */
+
+    fn interpret(&self, packet: OscPacket) {
+        match packet {
+            OscPacket::Message(osc_msg) => {
+
+                self.message_operations.get(&osc_msg.addr).map(|op| {
+                    op(osc_msg);
+                });
+
+            },
+            OscPacket::Bundle(osc_bundle) => {
+
+                match TaggedBundle::new(&osc_bundle) {
+                    Ok(tagged_bundle) => {
+
+                        if self.tbundle_funnels.contains(&tagged_bundle.bundle_tag) {
+                            for packet in tagged_bundle.contents {
+                                self.interpret(packet);
+                            }
+                        } else {
+                            self.tbundle_operations.get(&tagged_bundle.bundle_tag).map(|op| op(tagged_bundle));
+                        }
+
+                    },
+                    Err(msg) => warn!("Failed to parse bundle as tagged: {}", msg)
+                };
+            }
+        };
+
     }
 
     pub fn begin(&self) {
@@ -73,24 +126,7 @@ impl <'a> OSCStack<'a> {
                 Ok((size, _)) => {
                     let (_rem, packet) = rosc::decoder::decode_udp(&buf[..size]).unwrap();
 
-                    match packet {
-                        OscPacket::Message(osc_msg) => {
-
-                            self.message_operations.get(&osc_msg.addr).map(|op| {
-                                op(osc_msg);
-                            });
-
-                        },
-                        OscPacket::Bundle(osc_bundle) => {
-    
-                            match TaggedBundle::new(&osc_bundle) {
-                                Ok(tagged_bundle) => {
-                                    self.tbundle_operations.get(&tagged_bundle.bundle_tag).map(|op| op(tagged_bundle));
-                                },
-                                Err(msg) => warn!("Failed to parse bundle as tagged: {}", msg)
-                            };
-                        }
-                    };
+                    self.interpret(packet);
 
                 }
                 Err(e) => {

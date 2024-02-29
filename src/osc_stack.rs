@@ -56,19 +56,6 @@ impl <'a> OSCStack<'a> {
         self
     }
 
-    /*
-        TODO: Funnel
-        - Ideally:
-            - from outside (caller)
-            - at any time (inside other functions)
-                -> Can have the Fn take self? Or is that a violation of lifetimes?
-            - perform the self.operations.map(call)
-        - Ways around it
-            - Special "on_tbundle_funnel" that does this internally
-                - As in:
-
-     */
-
     fn interpret(&self, packet: OscPacket) {
         match packet {
             OscPacket::Message(osc_msg) => {

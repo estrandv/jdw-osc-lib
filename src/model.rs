@@ -1,5 +1,5 @@
 use bigdecimal::BigDecimal;
-use rosc::{OscBundle, OscMessage, OscPacket};
+use rosc::{OscBundle, OscMessage, OscPacket, OscType};
 
 /*
     OSC structs for careful parsing and management of expected message and bundle types.
@@ -12,12 +12,47 @@ use std::option::Option;
 /*
     Adding some convenience functions for OscMessage args
  */
+
+// Verify that custom args follow the String,float,String,float... pattern
+// Note: This could possibly be a bit expensive time-wise!
+fn validate_args(args: &Vec<OscType>) -> Result<(), String> {
+
+    let mut next_is_string = true;
+
+    for arg in args {
+        match arg {
+            OscType::Float(_) => {
+                if next_is_string {
+                    return Err("Malformed message: Custom arg float where string expected".to_string());
+                }
+
+                next_is_string = true;
+            },
+            OscType::String(_) => {
+                if !next_is_string {
+                    return Err("Malformed message: Custom arg string where float expected".to_string());
+                }
+
+                next_is_string = false;
+            },
+            _ => {
+                return Err("Malformed message: Custom arg in message not of type string or float".to_string());
+            }
+        }
+    }
+
+    Ok(())
+}
+
 pub trait OscArgHandler {
     fn expect_addr(&self, addr_name: &str) -> Result<(), String>;
     fn expect_args(&self, amount: usize) -> Result<String, String>;
     fn get_string_at(&self, index: usize, name: &str, ) -> Result<String, String>;
     fn get_float_at(&self, index: usize, name: &str, ) -> Result<f32, String>;
     fn get_int_at(&self, index: usize, name: &str, ) -> Result<i32, String>;
+    fn get_u64_at(&self, index: usize, name: &str) -> Result<u64, String>;
+    fn get_bigdecimal_at(&self, index: usize, name: &str) -> Result<BigDecimal, String>;
+    fn get_varargs(&self, start_index: usize) -> Result<Vec<OscType>, String>;
 }
 
 impl OscArgHandler for OscMessage {
@@ -63,6 +98,19 @@ impl OscArgHandler for OscMessage {
             .map_or(Err(err_msg), |s| Ok(s))
     }
 
+    fn get_u64_at(&self, index: usize, name: &str) -> Result<u64, String> {
+        u64::try_from(self.get_int_at(index, name)?).map_err(|result| result.to_string())
+    }
+
+    fn get_bigdecimal_at(&self, index: usize, name: &str) -> Result<BigDecimal, String> {
+        BigDecimal::from_str(&self.get_string_at(index, name)?).map_err(|result| result.to_string())
+    }
+
+    fn get_varargs(&self, start_index: usize) -> Result<Vec<OscType>, String> {
+        let named_args = if self.args.len() > start_index {(&self.args[start_index..].to_vec()).clone()} else {vec![]};
+        validate_args(&named_args)?;
+        return Ok(named_args);
+    }
 }
 
 

@@ -58,7 +58,7 @@ pub trait OscArgHandler {
 impl OscArgHandler for OscMessage {
 
     fn expect_addr(&self, addr_name: &str) -> Result<(), String> {
-        if &self.addr.to_string() != addr_name {
+        if self.addr != addr_name {
             return Err(format!("Attempted to format {} as the wrong kind of message - this likely a human error in the source code", addr_name));
         }
 
@@ -107,7 +107,7 @@ impl OscArgHandler for OscMessage {
     }
 
     fn get_varargs(&self, start_index: usize) -> Result<Vec<OscType>, String> {
-        let named_args = if self.args.len() > start_index {(&self.args[start_index..].to_vec()).clone()} else {vec![]};
+        let named_args = if self.args.len() > start_index {self.args[start_index..].to_vec()} else {vec![]};
         validate_args(&named_args)?;
         return Ok(named_args);
     }

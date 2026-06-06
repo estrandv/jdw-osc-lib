@@ -25,7 +25,8 @@ pub struct OSCStack<'a> {
     message_operations: HashMap<String, &'a dyn Fn(OscMessage)>,
     tbundle_operations: HashMap<String, &'a dyn Fn(TaggedBundle)>,
     tbundle_funnels: HashSet<String>,
-    host_url: String
+    host_url: String,
+    buffer_size: usize,
 }
 
 impl <'a> OSCStack<'a> {
@@ -34,8 +35,14 @@ impl <'a> OSCStack<'a> {
             message_operations: HashMap::new(),
             tbundle_operations: HashMap::new(),
             tbundle_funnels: HashSet::new(),
-            host_url
+            host_url,
+            buffer_size: 333072,
         }
+    }
+
+    pub fn buffer_size(&'a mut self, size: usize) -> &mut OSCStack {
+        self.buffer_size = size;
+        self
     }
 
     pub fn on_message(&'a mut self, tag: &str, operations: &'a dyn Fn(OscMessage)) -> &mut OSCStack {
@@ -96,7 +103,7 @@ impl <'a> OSCStack<'a> {
 
         let sock = UdpSocket::bind(addr).unwrap();
 
-        let mut buf = [0u8; 333072];
+        let mut buf = vec![0u8; self.buffer_size];
 
         loop {
 

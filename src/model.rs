@@ -76,26 +76,26 @@ impl OscArgHandler for OscMessage {
 
     fn get_string_at(&self, index: usize, name: &str, ) -> Result<String, String> {
         let err_msg = format!("{} string not found as {}th arg", name, index);
-        self.args
-            .get(index)
-            .map_or(None, |some| some.clone().string())
-            .map_or(Err(err_msg), |s| Ok(s))
+        match self.args.get(index) {
+            Some(OscType::String(s)) => Ok(s.clone()),
+            _ => Err(err_msg),
+        }
     }
 
     fn get_float_at(&self, index: usize, name: &str, ) -> Result<f32, String> {
         let err_msg = format!("{} float not found as {}th arg", name, index);
-        self.args
-            .get(index)
-            .map_or(None, |some| some.clone().float())
-            .map_or(Err(err_msg), |s| Ok(s))
+        match self.args.get(index) {
+            Some(OscType::Float(f)) => Ok(*f),
+            _ => Err(err_msg),
+        }
     }
 
     fn get_int_at(&self, index: usize, name: &str, ) -> Result<i32, String> {
         let err_msg = format!("{} float not found as {}th arg", name, index);
-        self.args
-            .get(index)
-            .map_or(None, |some| some.clone().int())
-            .map_or(Err(err_msg), |s| Ok(s))
+        match self.args.get(index) {
+            Some(OscType::Int(i)) => Ok(*i),
+            _ => Err(err_msg),
+        }
     }
 
     fn get_u64_at(&self, index: usize, name: &str) -> Result<u64, String> {
